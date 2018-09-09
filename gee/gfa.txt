@@ -1,27 +1,26 @@
-// MODIS land cover classification
+// Compute global landcover, energy and biomass variables.
 
-// Force projection to 10000 meters/pixel.
-var SCALE = 10000;
 
-// Load a 2001 MODIS land cover image.
-var image1 = ee.Image('MODIS/051/MCD12Q1/2001_01_01');
-// Select the classification band of interest.
-var image2 = image1.select(['Land_Cover_Type_1']);
-// Reproject to WGS84 to force the image to be reprojected on load.
-// This is just for display purposes, to visualize the input to
-// the following operations.  The next reproject is sufficient
-// to force the computation to occur at native scale.
-var image3 = image2.reproject('EPSG:4326', null, SCALE);
-// Smooth with a mode filter.
-var image4 = image3.focal_mode();
-// Use erosion and dilation to get rid of small islands.
-var image5 = image4.focal_max(3).focal_min(5).focal_max(3);
-// Reproject to force the operations to be performed at SCALE.
-var image6 = image5.reproject('EPSG:4326', null, SCALE);
 
-// Define display paramaters with appropriate colors for the MODIS
-// land cover classification image.
-var PALETTE = [
+// SETTINGS
+// Resolution
+var RESOLUTION = 10000;
+var DATESTART = '2013-01-01';
+var DATEEND = '2013-12-31';
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// MODIS land cover
+///////////////////////////////////////////////////////////////////////////////
+var lc_collection = ee.ImageCollection('MODIS/051/MCD12Q1').select(['Land_Cover_Type_1']);
+// print('Collection: ', lc_collection);
+var lc = ee.Image(lc_collection.filterDate(DATESTART,DATEEND).first());
+var lc_mode = lc.focal_mode(1.5);
+// print('Metadata properties: ', lc.propertyNames()); 
+// print('Metadata properties: ', lc_mode.propertyNames()); 
+var lc_palette = [
     'aec3d4', // water
     '152106', '225129', '369b47', '30eb5b', '387242', // forest
     '6a2325', 'c3aa69', 'b76031', 'd9903d', '91af40', // shrub, grass, savannah
@@ -33,50 +32,158 @@ var PALETTE = [
     'f7e084', // barren
     '6f6f6f'  // tundra
 ].join(',');
-
-var vis_params = {min: 0, max: 17, palette: PALETTE};
-
-// Display each step of the computation.
-Map.setCenter(-113.41842, 40.055489, 6);
-Map.addLayer(image2, vis_params, 'IGBP classification');
-Map.addLayer(image3, vis_params, 'Reprojected');
-Map.addLayer(image4, vis_params, 'Mode');
-Map.addLayer(image5, vis_params, 'Smooth');
-Map.addLayer(image6, vis_params, 'Smooth6');
+var lc_vis_params = {min: 0, max: 17, palette: lc_palette};
 
 
 
 
+///////////////////////////////////////////////////////////////////////////////
+// MODIS gross primary productivity
+///////////////////////////////////////////////////////////////////////////////
+var gpp = ee.ImageCollection('MODIS/006/MYD17A2H')
+                  .filter(ee.Filter.date(DATESTART, DATEEND))
+                  .select('Gpp');
+var gpp_sum = gpp.reduce(ee.Reducer.sum());
+
+var gpp_vis_params = {
+  min: 0.0,
+  max: 6000.0,
+  palette: ['bbe029', '0a9501', '074b03'],
+};
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// MODIS net primary productivity
+///////////////////////////////////////////////////////////////////////////////
+var npp = ee.ImageCollection('MODIS/006/MYD17A3H')
+                  .filter(ee.Filter.date(DATESTART, DATEEND))
+                  .select('Npp');
+var npp_sum = npp.reduce(ee.Reducer.sum());
+
+var npp_vis_params = {
+  min: 0.0,
+  max: 6000.0,
+  palette: ['bbe029', '0a9501', '074b03'],
+};
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// GLDAS 2.1 collection
+///////////////////////////////////////////////////////////////////////////////
 var dataset = ee.ImageCollection('NASA/GLDAS/V021/NOAH/G025/T3H')
-                  .filter(ee.Filter.date('2017-01-01', '2017-12-31'));
-var SoilMoi40_100cm_inst_mean = dataset.select('SoilMoi40_100cm_inst').mean();
-var SoilMoi40_100cm_inst_mean_Vis = {
+                  .filter(ee.Filter.date(DATESTART,DATEEND));
+// print('Collection: ', dataset);
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Soil moisture
+///////////////////////////////////////////////////////////////////////////////
+// Soil moisture 10 to 40 cm
+var sm_010_040_inst = dataset.select('SoilMoi10_40cm_inst');
+var sm_010_040_inst_mean = sm_010_040_inst.reduce(ee.Reducer.mean());
+
+// Soil moisture 40 to 100 cm
+var sm_040_100_inst = dataset.select('SoilMoi40_100cm_inst');
+var sm_040_100_inst_mean = sm_040_100_inst.reduce(ee.Reducer.mean());
+
+// Soil moisture 100 to 200 cm
+var sm_100_200_inst = dataset.select('SoilMoi100_200cm_inst');
+var sm_100_200_inst_mean = sm_100_200_inst.reduce(ee.Reducer.mean());
+
+// Soil moisture 10 to 200 cm
+var sm_010_200_inst_mean = ee.Image.cat([sm_010_040_inst_mean, sm_040_100_inst_mean, sm_100_200_inst_mean]).reduce(ee.Reducer.mean())
+
+// Soil moisture visualization
+var sm_vis_params = {
   min: 10.0,
   max: 300.0,
   palette: ['1303ff', '42fff6', 'f3ff40', 'ff5d0f'],
 };
 
 
-Map.setCenter(71.72, 52.48, 0);
-Map.addLayer(
-    SoilMoi40_100cm_inst_mean, SoilMoi40_100cm_inst_mean_Vis,
-    'Average Surface Skin Temperature [K]');
 
 
-var SoilMoi40_100cm_inst = dataset.select('SoilMoi40_100cm_inst');
-var mean = SoilMoi40_100cm_inst.reduce(ee.Reducer.mean());
+///////////////////////////////////////////////////////////////////////////////
+// Rainfall
+///////////////////////////////////////////////////////////////////////////////
+var rainfall = dataset.select('Rainf_f_tavg');
+var rainfall_mean = rainfall.reduce(ee.Reducer.mean());
+var rainfall_vis_params = {
+  min: 0.0,
+  max: 0.0001,
+  palette: ['1303ff', '42fff6', 'f3ff40', 'ff5d0f'],
+};
 
-Map.addLayer(
-    mean, SoilMoi40_100cm_inst_mean_Vis,
-    'Average Surface Skin Temperature [K]');
 
 
-// Create a geometry representing an export region.
-var geometry = ee.Geometry.Rectangle([-180, -90, 180, 90]);
 
-// Export the image, specifying scale and region.
-Export.image.toDrive({
-  image: mean,
-  description: 'imageToDriveExample',
-  scale: 10000,
-});
+///////////////////////////////////////////////////////////////////////////////
+// Plant canopy surface water
+///////////////////////////////////////////////////////////////////////////////
+var plant_canopy_surface_water = dataset.select('CanopInt_inst');
+var plant_canopy_surface_water_mean = plant_canopy_surface_water.reduce(ee.Reducer.mean());
+var plant_canopy_surface_water_vis_params = {
+  min: 0.0,
+  max: 0.5,
+  palette: ['1303ff', '42fff6', 'f3ff40', 'ff5d0f'],
+};
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Heat flux
+///////////////////////////////////////////////////////////////////////////////
+// Heat flux
+var heat_net_flux = dataset.select('Qg_tavg');
+var heat_net_flux_mean = heat_net_flux.reduce(ee.Reducer.mean());
+var heat_net_flux_vis_params = {
+  min: 0,
+  max: 100,
+  palette: ['1303ff', '42fff6', 'f3ff40', 'ff5d0f'],
+};
+
+// Sensible heat flux
+var sensible_heat_net_flux = dataset.select('Qh_tavg');
+var sensible_heat_net_flux_mean = sensible_heat_net_flux.reduce(ee.Reducer.mean());
+var sensible_heat_net_flux_vis_params = {
+  min: -1000,
+  max: 18000,
+  palette: ['1303ff', '42fff6', 'f3ff40', 'ff5d0f'],
+};
+
+// Latent heat flux
+var latent_heat_net_flux = dataset.select('Qle_tavg');
+var latent_heat_net_flux_mean = latent_heat_net_flux.reduce(ee.Reducer.mean());
+var latent_heat_net_flux_vis_params = {
+  min: 0,
+  max: 100,
+  palette: ['1303ff', '42fff6', 'f3ff40', 'ff5d0f'],
+};
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Visualization
+///////////////////////////////////////////////////////////////////////////////
+Map.setCenter(-113.41842, 40.055489, 6);
+//Map.addLayer(lc, lc_vis_params, 'Landcover IGBP');
+//Map.addLayer(lc_mode, lc_vis_params, 'Mode landcover IGBP');
+//Map.addLayer(gpp_sum, gpp_vis_params, 'Total GPP');
+//Map.addLayer(npp_sum, npp_vis_params, 'Total NPP');
+//Map.addLayer(sm_010_040_inst_mean, sm_vis_params, 'Mean soil Moisture 10 to 100');
+//Map.addLayer(sm_040_100_inst_mean, sm_vis_params, 'Mean soil Moisture 40 to 100');
+//Map.addLayer(sm_100_200_inst_mean, sm_vis_params, 'Mean soil Moisture 100 to 200');
+//Map.addLayer(sm_010_200_inst_mean, sm_vis_params, 'Mean soil Moisture 10 to 200');
+//Map.addLayer(rainfall_mean, rainfall_vis_params, 'Mean rainfall rate');
+//Map.addLayer(plant_canopy_surface_water_mean, plant_canopy_surface_water_vis_params, 'Mean plant canopy surface water');
+//Map.addLayer(heat_net_flux_mean, heat_net_flux_vis_params, 'Mean heat flux');
+//Map.addLayer(sensible_heat_net_flux_mean, sensible_heat_net_flux_vis_params, 'Mean sensible heat flux');
+//Map.addLayer(latent_heat_net_flux_mean, latent_heat_net_flux_vis_params, 'Mean latent heat flux');
