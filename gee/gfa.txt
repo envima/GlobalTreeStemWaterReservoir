@@ -124,20 +124,6 @@ var rainfall_vis_params = {
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// Plant canopy surface water
-///////////////////////////////////////////////////////////////////////////////
-var plant_canopy_surface_water = dataset.select('CanopInt_inst');
-var plant_canopy_surface_water_mean = plant_canopy_surface_water.reduce(ee.Reducer.mean());
-var plant_canopy_surface_water_vis_params = {
-  min: 0.0,
-  max: 0.5,
-  palette: ['1303ff', '42fff6', 'f3ff40', 'ff5d0f'],
-};
-
-
-
-
-///////////////////////////////////////////////////////////////////////////////
 // Heat flux
 ///////////////////////////////////////////////////////////////////////////////
 // Heat flux
@@ -171,6 +157,20 @@ var latent_heat_net_flux_vis_params = {
 
 
 ///////////////////////////////////////////////////////////////////////////////
+// Plant canopy surface water
+///////////////////////////////////////////////////////////////////////////////
+var plant_canopy_surface_water = dataset.select('CanopInt_inst');
+var plant_canopy_surface_water_mean = plant_canopy_surface_water.reduce(ee.Reducer.mean());
+var plant_canopy_surface_water_vis_params = {
+  min: 0.0,
+  max: 0.5,
+  palette: ['1303ff', '42fff6', 'f3ff40', 'ff5d0f'],
+};
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////
 // Visualization
 ///////////////////////////////////////////////////////////////////////////////
 Map.setCenter(-113.41842, 40.055489, 6);
@@ -183,7 +183,26 @@ Map.setCenter(-113.41842, 40.055489, 6);
 //Map.addLayer(sm_100_200_inst_mean, sm_vis_params, 'Mean soil Moisture 100 to 200');
 //Map.addLayer(sm_010_200_inst_mean, sm_vis_params, 'Mean soil Moisture 10 to 200');
 //Map.addLayer(rainfall_mean, rainfall_vis_params, 'Mean rainfall rate');
-//Map.addLayer(plant_canopy_surface_water_mean, plant_canopy_surface_water_vis_params, 'Mean plant canopy surface water');
 //Map.addLayer(heat_net_flux_mean, heat_net_flux_vis_params, 'Mean heat flux');
 //Map.addLayer(sensible_heat_net_flux_mean, sensible_heat_net_flux_vis_params, 'Mean sensible heat flux');
 //Map.addLayer(latent_heat_net_flux_mean, latent_heat_net_flux_vis_params, 'Mean latent heat flux');
+//Map.addLayer(plant_canopy_surface_water_mean, plant_canopy_surface_water_vis_params, 'Mean plant canopy surface water');
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Export images
+///////////////////////////////////////////////////////////////////////////////
+var export_images = ee.Image.cat([lc_mode, gpp_sum, npp_sum, 
+sm_010_040_inst_mean,sm_040_100_inst_mean,sm_100_200_inst_mean,sm_010_200_inst_mean,
+rainfall_mean,heat_net_flux_mean,sensible_heat_net_flux_mean,latent_heat_net_flux_mean,
+plant_canopy_surface_water_mean]);
+
+// Export the image, specifying scale and region.
+Export.image.toDrive({
+  image: export_images.toFloat(),
+  description: 'global_dataset_compilation_2013',
+  scale: 10000,
+  crs: "EPSG:3857"
+});
