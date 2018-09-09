@@ -15,11 +15,12 @@ var DATEEND = '2013-12-31';
 // MODIS land cover
 ///////////////////////////////////////////////////////////////////////////////
 var lc_collection = ee.ImageCollection('MODIS/051/MCD12Q1').select(['Land_Cover_Type_1']);
-// print('Collection: ', lc_collection);
+//print('Collection: ', lc_collection);
 var lc = ee.Image(lc_collection.filterDate(DATESTART,DATEEND).first());
 var lc_mode = lc.focal_mode(1.5);
-// print('Metadata properties: ', lc.propertyNames()); 
-// print('Metadata properties: ', lc_mode.propertyNames()); 
+//print('LC properties: ', lc.propertyNames()); 
+print('LC projection: ', lc.projection());
+// print('Metadata properties: ', lc_collection); 
 var lc_palette = [
     'aec3d4', // water
     '152106', '225129', '369b47', '30eb5b', '387242', // forest
@@ -43,7 +44,9 @@ var lc_vis_params = {min: 0, max: 17, palette: lc_palette};
 var gpp = ee.ImageCollection('MODIS/006/MYD17A2H')
                   .filter(ee.Filter.date(DATESTART, DATEEND))
                   .select('Gpp');
+//print('GPP properties: ', gpp.propertyNames()); 
 var gpp_sum = gpp.reduce(ee.Reducer.sum());
+print('GPP projection: ', gpp_sum.projection());
 
 var gpp_vis_params = {
   min: 0.0,
@@ -60,7 +63,9 @@ var gpp_vis_params = {
 var npp = ee.ImageCollection('MODIS/006/MYD17A3H')
                   .filter(ee.Filter.date(DATESTART, DATEEND))
                   .select('Npp');
+//print('NPP properties: ', npp.propertyNames());
 var npp_sum = npp.reduce(ee.Reducer.sum());
+print('NPP projection: ', npp_sum.projection());
 
 var npp_vis_params = {
   min: 0.0,
@@ -87,6 +92,7 @@ var dataset = ee.ImageCollection('NASA/GLDAS/V021/NOAH/G025/T3H')
 // Soil moisture 10 to 40 cm
 var sm_010_040_inst = dataset.select('SoilMoi10_40cm_inst');
 var sm_010_040_inst_mean = sm_010_040_inst.reduce(ee.Reducer.mean());
+print('SM projection: ', sm_010_040_inst_mean.projection());
 
 // Soil moisture 40 to 100 cm
 var sm_040_100_inst = dataset.select('SoilMoi40_100cm_inst');
@@ -173,7 +179,7 @@ var plant_canopy_surface_water_vis_params = {
 ///////////////////////////////////////////////////////////////////////////////
 // Visualization
 ///////////////////////////////////////////////////////////////////////////////
-Map.setCenter(-113.41842, 40.055489, 6);
+Map.setCenter(0, 0, 0);
 //Map.addLayer(lc, lc_vis_params, 'Landcover IGBP');
 //Map.addLayer(lc_mode, lc_vis_params, 'Mode landcover IGBP');
 //Map.addLayer(gpp_sum, gpp_vis_params, 'Total GPP');
@@ -194,7 +200,7 @@ Map.setCenter(-113.41842, 40.055489, 6);
 ///////////////////////////////////////////////////////////////////////////////
 // Export images
 ///////////////////////////////////////////////////////////////////////////////
-var export_images = ee.Image.cat([lc_mode, gpp_sum, npp_sum, 
+var export_images = ee.Image.cat([gpp_sum, npp_sum, 
 sm_010_040_inst_mean,sm_040_100_inst_mean,sm_100_200_inst_mean,sm_010_200_inst_mean,
 rainfall_mean,heat_net_flux_mean,sensible_heat_net_flux_mean,latent_heat_net_flux_mean,
 plant_canopy_surface_water_mean]);
@@ -204,5 +210,6 @@ Export.image.toDrive({
   image: export_images.toFloat(),
   description: 'global_dataset_compilation_2013',
   scale: 10000,
-  crs: "EPSG:3857"
+  crs: "EPSG:4326"
 });
+
