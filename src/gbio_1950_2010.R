@@ -1,6 +1,35 @@
 library(envimaR)
-root_folder = path.expand("~/plygrnd/global_forest_cover/")
+root_folder = path.expand("~/analysis/global_forest_cover/")
 source(file.path(root_folder, "EI-GlobalForestAnalysis/src/000_setup.R"))
+
+
+# Read global biomass data 200, GSV --------------------------------------------
+# http://globbiomass.org/wp-content/uploads/GB_Maps/Globbiomass_global_dataset.html
+gsv_files = list.files(envrmt$path_biomass_2010_gsv, 
+                       pattern = glob2rx("*gsv.tif"),
+                       full.names = TRUE)
+
+gdalbuildvrt(gsv_files, file.path(envrmt$path_biomass_2010_gsv, "gsv.vrt"), verbose = TRUE)
+
+# target = gdalinfo(file.path(envrmt$path_gee_landcover_rainfall, "gee_1981_2010.tif"))
+
+gdalwarp(file.path(envrmt$path_biomass_2010_gsv, "gsv.vrt"), 
+         file.path(envrmt$path_maped_datasets, "gsv_wm.tif"),
+         s_srs = "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0 ",
+         t_srs = "EPSG:3857",
+         # tr = c(5000, 5000),
+         te = c(-20040000.000, -19180000.000, 20040000.000, 19180000.000),
+         # tap = TRUE,
+         ts = c(8016, 7672),
+         r = "average",
+         verbose=TRUE)
+
+
+
+
+
+
+
 
 
 # Read tree water content ------------------------------------------------------
@@ -10,27 +39,41 @@ twc = read.table(file.path(envrmt$path_tree_water_content,
 
 
 
-# Read global biomass data 1950 to 2010 ----------------------------------------
-bm = stack(file.path(envrmt$path_biomass_1950_2010, 
-                     "historical_global_1-degree_forest_biomass.nc4"),
-           varname = "AGB_ha")
-names(bm) = paste0("Y_", seq(1950, 2010, 5))
-plot(bm)
+# Reproject data
+for(i in seq(length(gsv_files))){
+  gsv_error_filename = paste0(substr(gsv_files[i], 1, nchar(gsv_files[i])-4),
+                              "_err.tif")
+  
+  gdalwarp(gsv_files[i], file.path(envrmt$path_biomass_2010_gsv_wm, basename(gsv_files[i])),
+           s_srs = "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0 ",
+           t_srs = "EPSG:3857",
+           tr = c(5000, 5000),
+           r = "average",
+           verbose=TRUE)
+
+  
+  
+  gsv = stack(gsv_files[i])
+  gsv_wm = projectRaster(gsv, res = 5000, crs = crs("+init=epsg:3857"), 
+                         method="bilinear")
+  saveRDS(gsv_wm, file = file.path(envrmt$path_biomass_2010_gsv_wm, 
+                                   paste0(substr(basename(gsv_files[i]), 1, (
+                                     nchar(basename(gsv_files[i]))-4)), ".rds")))
+  rm(gsv, gsv_wm)
+  
+  gsv_error = stack(gsv_error_filename)
+  gsv_error_wm = projectRaster(gsv_error, res = 5000, crs = crs("+init=epsg:3857"), 
+                               method="bilinear")
+  saveRDS(gsv_error_wm, file = file.path(envrmt$path_biomass_2010_gsv_wm, 
+                                   paste0(substr(basename(gsv_error_filename), 1, (
+                                     nchar(basename(gsv_error_filename))-4)), ".rds")))
+  rm(gsv_error, gsv_error_wm)
+  
+}
 
 
-# Read global biomass data 200, GSV --------------------------------------------
-# http://globbiomass.org/wp-content/uploads/GB_Maps/Globbiomass_global_dataset.html
-gsv_files = list.files(envrmt$path_biomass_2010_gsv, 
-                       pattern = glob2rx("*gsv.tif"),
-                       full.names = TRUE)
-
-i = 1
-gsv = stack(gsv_files[i])
-gsv_error = stack(paste0(substr(gsv_files[i], 1, nchar(gsv_files[i])-4),
-                         "_err.tif"))
+# MODIS land cover and rainfall ------------------------------------------------
+lcr = stack(file.path(envrmt$path_gee_landcover_rainfall, "gee_1981_2010.tif"))
 
 
 
-# MODIS land cover -------------------------------------------------------------
-lc = stack(file.path(envrmt$path_modis_landcover, "MCD12Q1_V6_10000m.tif"))
-plot(lc)

@@ -1,21 +1,28 @@
-// MODIS land cover classification
+// Compute global landcover and precipitation
 
-// Force projection to 10000 meters/pixel.
-var SCALE = 500;
+// SETTINGS
+// Resolution
+var SCALE = 5000;
+var DATESTART = '1981-01-01';
+var DATEEND = '2010-12-31';
 
-// Load a 2010 MODIS land cover image.
-var image1 = ee.Image('MODIS/006/MCD12Q1/2010_01_01');
+// Force projection to 5000 meters/pixel.
+
+///////////////////////////////////////////////////////////////////////////////
+// MODIS land cover
+///////////////////////////////////////////////////////////////////////////////
+var mcd12q1 = ee.Image('MODIS/006/MCD12Q1/2010_01_01');
 // Select the classification band of interest.
-var image2 = image1.select(['LC_Type1']);
-print('LC projection: ', image2.projection());
+var mcd12q1_lct1 = mcd12q1.select(['LC_Type1']);
+print('LC projection: ', mcd12q1_lct1.projection());
 
 // Reproject to WGS84 to force the image to be reprojected on load.
 // This is just for display purposes, to visualize the input to
 // the following operations.  The next reproject is sufficient
 // to force the computation to occur at native scale.
-// var image3 = image2.reproject('EPSG:4326', null, SCALE);
+// var image3 = mcd12q1_lct1.reproject('EPSG:4326', null, SCALE);
 // Smooth with a mode filter.
-// var image4 = image2.focal_mode(1.5);
+// var image4 = mcd12q1_lct1.focal_mode(1.5);
 // Use erosion and dilation to get rid of small islands.
 // var image5 = image4.focal_max(3).focal_min(5).focal_max(3);
 // Reproject to force the operations to be performed at SCALE.
@@ -38,33 +45,49 @@ var PALETTE = [
 
 var vis_params = {min: 0, max: 17, palette: PALETTE};
 
+
+
+///////////////////////////////////////////////////////////////////////////////
+// GLDAS 2.1 Precipitation
+///////////////////////////////////////////////////////////////////////////////
+var dataset = ee.ImageCollection('NASA/GLDAS/V021/NOAH/G025/T3H')
+                  .filter(ee.Filter.date(DATESTART,DATEEND));
+// print('Collection: ', dataset);
+var precipitation = dataset.select('Rainf_f_tavg');
+var precipitation_mean = precipitation.reduce(ee.Reducer.mean());
+var precipitation_mean = precipitation_mean.multiply(3600);
+
+print('Precipitation projection: ', precipitation_mean.projection());
+
+var precipitationVis = {
+  min: 0.0,
+  max: 0.5,
+  palette: ['001137', '0aab1e', 'e7eb05', 'ff4a2d', 'e90000'],
+};
+
+
 // Display each step of the computation.
-// Map.setCenter(0, 0);
-// Map.addLayer(image2, vis_params, 'IGBP classification');
+Map.setCenter(0, 0);
+// Map.addLayer(mcd12q1_lct1, vis_params, 'IGBP classification');
 // Map.addLayer(image3, vis_params, 'Reprojected');
 //Map.addLayer(image4, vis_params, 'Mode');
 //Map.addLayer(image5, vis_params, 'Smooth');
 // Map.addLayer(image6, vis_params, 'Smooth6');
-
-
-
-
-
-
+// Map.addLayer(precipitation_mean, precipitationVis, 'Precipitation');
 
 // Create a geometry representing an export region.
 // var geometry = ee.Geometry.Rectangle([-180, -90, 180, 90]);
-var geometry = ee.Geometry.Rectangle([-20048966.10, -20026376.39, 20048966.10, 20026376.39]);
+var geometry = ee.Geometry.Rectangle([-20048966, -20026376, 20048966, 20026376]);
 
-var exportimage = ee.Image.cat([image2]);
+//var exportimage = ee.Image.cat([mcd12q1_lct1,precipitation_mean]);
+// var exportimage = ee.Image.cat([precipitation_mean, mcd12q1]);
+var exportimage = ee.Image.cat([mcd12q1]);
 
 // Export the image, specifying scale and region.
 Export.image.toDrive({
   image: exportimage.toFloat(),
   description: 'imageToDriveExample',
-  scale: 500,
+  scale: SCALE,
   crs: "EPSG:3857",
-  maxPixels: 1e12
+  maxPixels: 1e13
 });
-
-
