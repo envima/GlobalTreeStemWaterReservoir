@@ -62,7 +62,7 @@ rainfall = focal(bl[[2]], w=matrix(1,21,21), fun = modal, na.rm = TRUE)
 bl[[2]] = merge(bl[[2]], rainfall)
 
 # Convert rainfall from l/m2/h to m3/ha on an annual average
-b[[2]] = b[[2]] * 24*365/1000*10000
+bl[[2]] = bl[[2]] * 24*365/1000*10000
 
 # Crop and mask
 ext = extent(bl)
@@ -116,7 +116,13 @@ calcTWC = function(data, forest_mask, twc){
 tree_water_mean = calcTWC(blm[[4]], forest_mask, twc$Mean)
 tree_water_sd = calcTWC(blm[[4]], forest_mask, twc$SDev)
 tree_water_mean_error = calcTWC(blm[[3]], forest_mask, twc$Mean)
+tree_water_mean_plus_error = tree_water_mean + tree_water_mean_error
+tree_water_mean_minus_error = tree_water_mean - tree_water_mean_error
 tree_water_mean_per_precipitation = tree_water_mean / blm[[2]]
+tree_water_mean_plus_error_per_precipitation = tree_water_mean_plus_error / blm[[2]]
+tree_water_mean_minus_error_per_precipitation = tree_water_mean_minus_error / blm[[2]]
+
+mean(getValues(tree_water_mean_per_precipitation), na.rm = TRUE)
 
 writeRaster(tree_water_mean, 
             file.path(envrmt$path_maped_datasets, "tree_water_mean.tif"),
@@ -127,6 +133,18 @@ writeRaster(tree_water_sd,
 writeRaster(tree_water_mean_error, 
             file.path(envrmt$path_maped_datasets, "tree_water_mean_error.tif"),
             format="GTiff", overwrite = TRUE)
+writeRaster(tree_water_mean_plus_error, 
+            file.path(envrmt$path_maped_datasets, "tree_water_mean_plus_error.tif"),
+            format="GTiff", overwrite = TRUE)
+writeRaster(tree_water_mean_minus_error, 
+            file.path(envrmt$path_maped_datasets, "tree_water_mean_minus_error.tif"),
+            format="GTiff", overwrite = TRUE)
 writeRaster(tree_water_mean_per_precipitation, 
             file.path(envrmt$path_maped_datasets, "tree_water_mean_per_precipitation.tif"),
+            format="GTiff", overwrite = TRUE)
+writeRaster(tree_water_mean_plus_error_per_precipitation, 
+            file.path(envrmt$path_maped_datasets, "tree_water_mean_plus_error_per_precipitation.tif"),
+            format="GTiff", overwrite = TRUE)
+writeRaster(tree_water_mean_minus_error_per_precipitation, 
+            file.path(envrmt$path_maped_datasets, "tree_water_mean_minus_error_per_precipitation.tif"),
             format="GTiff", overwrite = TRUE)
