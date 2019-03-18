@@ -34,27 +34,7 @@ tm_shape(twm, projection = prjt) +
             legend.bg.color="white", 
             earth.boundary = TRUE, 
             space.color="white")
-  
-  
 
-tm_shape(twm, projection = prjt) +
-  tm_raster(style = "cont", palette = ptwm, title = ltwm) +
-  tm_shape(World, is.master=TRUE) +
-  tm_borders("grey20") +
-  tm_grid(projection="longlat", labels.size = .5) +
-  tm_text("name", size="AREA") +
-  tm_compass(position = c(.65, .15), color.light = "grey90") +
-  tm_credits("Eckert IV projection", position = c("right", "BOTTOM")) +
-  tm_style("classic") +
-  tm_layout(bg.color="lightblue",
-            inner.margins=c(.04,.03, .02, .01), 
-            earth.boundary = TRUE, 
-            space.color="grey90") +
-  tm_legend(position = c("left", "bottom"), 
-            frame = TRUE,
-            bg.color="lightblue")
-
-data(World, land, metro, rivers)
 
 # Compute tree water content ---------------------------------------------------
 # 1 Evergreen Needleleaf Forests: 
