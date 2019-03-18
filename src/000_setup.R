@@ -11,7 +11,7 @@ project_folders = c("data/",
                     "data/tmp/", 
                     "EI-GlobalForestAnalysis/src/")
 
-libs = c("gdalUtils", "mapview", "raster", "rgdal", "sp")
+libs = c("colorspace", "gdalUtils", "mapview", "raster", "rgdal", "sp", "tmap")
 
 envrmt = createEnvi(root_folder = root_folder, folders = project_folders, 
                     path_prefix = "path_", libs = libs,
