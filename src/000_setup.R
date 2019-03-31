@@ -5,13 +5,15 @@ root_folder = path.expand("~/analysis/global_forest_cover/")
 project_folders = c("data/",
                     "data/biomass_1950_2010/",
                     "data/biomass_2010_gsv/",
+                    "data/ecoregions/",
+                    "data/graphics/",
                     "data/maped_datasets/",
                     "data/gee_landcover_rainfall/",
                     "data/tree_water_content/",
                     "data/tmp/", 
                     "EI-GlobalForestAnalysis/src/")
 
-libs = c("colorspace", "gdalUtils", "mapview", "raster", "rgdal", "sp", "tmap")
+libs = c("colorspace", "gdalUtils", "ggplot2", "mapview", "raster", "RColorBrewer", "rgdal", "sp", "sf", "tmap")
 
 envrmt = createEnvi(root_folder = root_folder, folders = project_folders, 
                     path_prefix = "path_", libs = libs,
