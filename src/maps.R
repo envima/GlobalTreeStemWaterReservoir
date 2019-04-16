@@ -10,6 +10,9 @@ source(file.path(root_folder, "EI-GlobalForestAnalysis/src/000_setup.R"))
 # Read datasets and aux data
 data(World, metro, rivers)
 
+ecoreg = readOGR(file.path(envrmt$path_ecoregions, "tnc_terr_ecoregions.shp"), layer = "tnc_terr_ecoregions")
+ecoreg_u = unionSpatialPolygons(ecoreg, ecoreg$WWF_MHTNAM)
+
 map_files = list.files(envrmt$path_maped_datasets, pattern = glob2rx("tree_water*.tif"), full.names = TRUE)
 
 maps = list("tree_water_mean", 
@@ -33,9 +36,11 @@ for(i in seq(length(maps))){
   tmap_style("white")
   map = tm_shape(act_data, projection = prjt) +
     tm_raster(style = "cont", palette = pallets[[i]], title = lables[[i]]) + 
-    tm_shape(World, is.master=TRUE) +
-    tm_borders("grey20") + 
-    tm_grid(projection="longlat", labels.size = .5) + 
+    tm_shape(ecoreg_u) +
+    tm_borders("grey40") +
+    # tm_shape(World, is.master=TRUE) +
+    # tm_borders("grey20") +
+    tm_grid(x = seq(-160, 160, 40), y = seq(-60, 60, 30), projection="longlat", col = "grey80", labels.size = .5) +
     tm_compass(position = c(.74, .14), color.light = "grey90", size = 1.5) +
     # tm_credits("Eckert IV projection", position = c("RIGHT", "BOTTOM")) +
     tm_layout(inner.margins=c(.04,.03, .02, .01), 
@@ -46,46 +51,11 @@ for(i in seq(length(maps))){
               legend.bg.color="white", 
               earth.boundary = TRUE, 
               space.color="white")
-
+  map
+  
   tiff(file.path(envrmt$path_graphics, paste0("map_", maps[[i]], ".tif")), width = 3000, height = 3000, res = 300)
   map
   dev.off()
 }
 
 
-
-
-
-# Compute tree water content ---------------------------------------------------
-# 1 Evergreen Needleleaf Forests: 
-# 2 Evergreen Broadleaf Forests: 
-# 3	Deciduous Needleleaf Forests: 
-# 4	Deciduous Broadleaf Forests: 
-# 5	Mixed Forests: dominated by neither deciduous nor evergreen
-
-
-
-writeRaster(act_data, 
-            file.path(envrmt$path_maped_datasets, "act_data.tif"),
-            format="GTiff", overwrite = TRUE)
-writeRaster(tree_water_sd, 
-            file.path(envrmt$path_maped_datasets, "tree_water_sd.tif"),
-            format="GTiff", overwrite = TRUE)
-writeRaster(act_data_error, 
-            file.path(envrmt$path_maped_datasets, "act_data_error.tif"),
-            format="GTiff", overwrite = TRUE)
-writeRaster(act_data_plus_error, 
-            file.path(envrmt$path_maped_datasets, "act_data_plus_error.tif"),
-            format="GTiff", overwrite = TRUE)
-writeRaster(act_data_minus_error, 
-            file.path(envrmt$path_maped_datasets, "act_data_minus_error.tif"),
-            format="GTiff", overwrite = TRUE)
-writeRaster(act_data_per_precipitation, 
-            file.path(envrmt$path_maped_datasets, "act_data_per_precipitation.tif"),
-            format="GTiff", overwrite = TRUE)
-writeRaster(act_data_plus_error_per_precipitation, 
-            file.path(envrmt$path_maped_datasets, "act_data_plus_error_per_precipitation.tif"),
-            format="GTiff", overwrite = TRUE)
-writeRaster(act_data_minus_error_per_precipitation, 
-            file.path(envrmt$path_maped_datasets, "act_data_minus_error_per_precipitation.tif"),
-            format="GTiff", overwrite = TRUE)
