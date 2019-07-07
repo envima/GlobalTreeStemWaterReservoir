@@ -24,7 +24,7 @@ lables = list(expression("Mean tree water (m"^3*"/ha)"),
 pallets = list(brewer.pal(9, "YlGnBu"), brewer.pal(9, "OrRd"), brewer.pal(9, "PuRd"))
 prjt = st_crs(54012)
 
-i = 2
+i = 3
 for(i in seq(length(maps))){
   act_data = raster(map_files[grep(paste0(maps[[i]], ".tif"), map_files)])
   # act_data = aggregate(act_data, factor = 10)
@@ -51,8 +51,7 @@ for(i in seq(length(maps))){
               legend.bg.color="white", 
               earth.boundary = TRUE, 
               space.color="white")
-  map
-  
+
   tiff(file.path(envrmt$path_graphics, paste0("map_", maps[[i]], ".tif")), width = 3000, height = 3000, res = 300)
   map
   dev.off()
