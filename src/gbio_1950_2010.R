@@ -12,7 +12,7 @@ gsv_files = list.files(envrmt$path_biomass_2010_gsv,
                        full.names = TRUE)
 
 gdalbuildvrt(gsv_files, file.path(envrmt$path_biomass_2010_gsv, "gsv.vrt"), verbose = TRUE)
-gdalbuildvrt(paste0(substr(gsv_files, 1, nchar(gsv_files[i])-4), "_err.tif"), 
+gdalbuildvrt(paste0(substr(gsv_files, 1, nchar(gsv_files[1])-4), "_err.tif"), 
              file.path(envrmt$path_biomass_2010_gsv, "gsv_err.vrt"), verbose = TRUE)
 
 # target = gdalinfo(file.path(envrmt$path_gee_landcover_rainfall, "gee_1981_2010.tif"))
@@ -53,7 +53,7 @@ gdal_translate(file.path(envrmt$path_gee_landcover_rainfall, "gee_1981_2010.tif"
 
 
 # Prepare baseline dataset -----------------------------------------------------
-bl_files = list.files(envrmt$path_maped_datasets, pattern = glob2rx("*.tif"),
+bl_files = list.files(envrmt$path_maped_datasets, pattern = glob2rx("g*.tif"),
            full.names = TRUE)
 bl = stack(bl_files)
 
@@ -148,3 +148,10 @@ writeRaster(tree_water_mean_plus_error_per_precipitation,
 writeRaster(tree_water_mean_minus_error_per_precipitation, 
             file.path(envrmt$path_maped_datasets, "tree_water_mean_minus_error_per_precipitation.tif"),
             format="GTiff", overwrite = TRUE)
+
+
+# Cross check ------------------------------------------------------------------
+gsv_org = raster(file.path(envrmt$path_biomass_2010_gsv, "gsv.vrt"))
+blm[[4]]
+                 
+# Global forest volume: 117 m3/ha (FAO 2000)
