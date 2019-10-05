@@ -31,6 +31,7 @@ for(i in seq(length(maps))){
   ecoreg_p = spTransform(ecoreg, projection(act_data))
   
   act_extract = extract(act_data, ecoreg_p, df = FALSE)
+  saveRDS(act_extract, file = file.path(envrmt$path_graphics, "act_extract.rds"))
   
   act_eco_extr = lapply(seq(length(ecoreg_p)), function(j){
     if(length(act_extract[[j]]) > 0) {
@@ -48,8 +49,22 @@ for(i in seq(length(maps))){
   saveRDS(act_eco_extr, file = file.path(envrmt$path_graphics, paste0("ecoregions_", maps[[i]], ".rds")))
   # act_eco_extr = readRDS(file.path(envrmt$path_graphics, paste0("ecoregions_", maps[[i]], ".rds")))
   
+  # Calculate fraction of woody vegetated area in the dataset for each ecoregion (based on 5000 x 5000 m )
+  frct = lapply(unique(act_eco_extr$MHTNAM), function(c){
+    act = act_eco_extr[act_eco_extr$MHTNAM == c,]
+    data.frame(MHTNAM = c,
+               VALUES_MEAN = mean(act$VALUES, na.rm = TRUE),
+               FRAC = round(sum(!is.na(act$VALUES)) / nrow(act), 2))
+  })
+  frct = do.call("rbind", frct)
+  frct$MHTNAM_FRCT = paste0(frct$MHTNAM, " (", frct$FRAC*100, "%)")
   
-  plt = ggplot(data = act_eco_extr, aes(x = MHTNAM, y = VALUES)) +
+  # Do not consider selected biomes (forest considered in this study has an aeral fraction of <= 0.01; uncertainties in map projections)
+  act_eco_extr_final = act_eco_extr[!(act_eco_extr$MHTNAM %in% c("Tundra","Deserts and Xeric Shrublands", "Rock and Ice", "Inland Water")), ]
+  
+  act_eco_extr_final = merge(act_eco_extr_final, frct[, grep("MHTNAM", colnames(frct))], by = "MHTNAM")
+  
+  plt = ggplot(data = act_eco_extr_final, aes(x = MHTNAM_FRCT, y = VALUES)) +
     geom_boxplot() + 
     theme_light() + 
     theme(axis.text.x = element_text(angle = 45, hjust = 1),
