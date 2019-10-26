@@ -71,46 +71,9 @@ for(i in seq(length(maps))){
           axis.title.x = element_blank()) + 
     labs(y = lables[[i]])
   
-  tiff(file.path(envrmt$path_graphics, paste0("plot_ecoregions_", maps[[i]], ".tif")), width = 3000, height = 3000, res = 300)
+  png(file.path(envrmt$path_graphics, paste0("plot_ecoregions_", maps[[i]], ".png")), width = 3000, height = 3000, res = 300)
   plt
   dev.off()
     
 }
 
-
-
-
-
-# Compute tree water content ---------------------------------------------------
-# 1 Evergreen Needleleaf Forests: 
-# 2 Evergreen Broadleaf Forests: 
-# 3	Deciduous Needleleaf Forests: 
-# 4	Deciduous Broadleaf Forests: 
-# 5	Mixed Forests: dominated by neither deciduous nor evergreen
-
-
-
-writeRaster(act_data, 
-            file.path(envrmt$path_maped_datasets, "act_data.tif"),
-            format="GTiff", overwrite = TRUE)
-writeRaster(tree_water_sd, 
-            file.path(envrmt$path_maped_datasets, "tree_water_sd.tif"),
-            format="GTiff", overwrite = TRUE)
-writeRaster(act_data_error, 
-            file.path(envrmt$path_maped_datasets, "act_data_error.tif"),
-            format="GTiff", overwrite = TRUE)
-writeRaster(act_data_plus_error, 
-            file.path(envrmt$path_maped_datasets, "act_data_plus_error.tif"),
-            format="GTiff", overwrite = TRUE)
-writeRaster(act_data_minus_error, 
-            file.path(envrmt$path_maped_datasets, "act_data_minus_error.tif"),
-            format="GTiff", overwrite = TRUE)
-writeRaster(act_data_per_precipitation, 
-            file.path(envrmt$path_maped_datasets, "act_data_per_precipitation.tif"),
-            format="GTiff", overwrite = TRUE)
-writeRaster(act_data_plus_error_per_precipitation, 
-            file.path(envrmt$path_maped_datasets, "act_data_plus_error_per_precipitation.tif"),
-            format="GTiff", overwrite = TRUE)
-writeRaster(act_data_minus_error_per_precipitation, 
-            file.path(envrmt$path_maped_datasets, "act_data_minus_error_per_precipitation.tif"),
-            format="GTiff", overwrite = TRUE)
