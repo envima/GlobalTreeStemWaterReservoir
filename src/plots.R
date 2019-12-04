@@ -31,7 +31,7 @@ for(i in seq(length(maps))){
   ecoreg_p = spTransform(ecoreg, projection(act_data))
   
   act_extract = extract(act_data, ecoreg_p, df = FALSE)
-  saveRDS(act_extract, file = file.path(envrmt$path_graphics, "act_extract.rds"))
+  saveRDS(act_extract, file = file.path(envrmt$path_graphics, paste0("act_extract_", maps[[i]], ".rds")))
   
   act_eco_extr = lapply(seq(length(ecoreg_p)), function(j){
     if(length(act_extract[[j]]) > 0) {
@@ -76,4 +76,5 @@ for(i in seq(length(maps))){
   dev.off()
     
 }
+
 
