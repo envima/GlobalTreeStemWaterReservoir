@@ -5,6 +5,8 @@
 #' @param bl baseline dataset for tree water computation
 #' @param twc_lut path to the tree water content look up table
 #' 
+#' @return global tree water content
+#' 
 #' @author Thomas Nauss
 #' @contributer Pierre L. Ibisch, Jeanette S. Blumröder, Tobias Cremer, 
 #' Katharina Lüdicke, Peter R. Hobson, Douglas Sheil
