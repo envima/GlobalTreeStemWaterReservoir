@@ -1,21 +1,23 @@
 # Set environment for environmental information systems analysis
 
-root_folder = path.expand("~/analysis/global_forest_cover/")
+root_folder = path.expand("~/analysis/globalTreeWater/")
+fcts_folder = file.path(root_folder, "EI-GlobalTreeWater/src/functions/")
 
 project_folders = c("data/",
-                    "data/biomass_1950_2010/",
                     "data/biomass_2010_gsv/",
                     "data/ecoregions/",
+                    "data/gee_landcover_rainfall/",
                     "data/graphics/",
                     "data/maped_datasets/",
-                    "data/gee_landcover_rainfall/",
+                    "data/rds_data/",
                     "data/tree_water_content/",
-                    "data/tmp/", 
-                    "EI-GlobalForestAnalysis/src/")
+                    "data/tmp/")
 
 libs = c("colorspace", "gdalUtils", "ggplot2", "maptools", "mapview", "raster", "RColorBrewer", "rgdal", "sp", "sf", "tmap")
 
-envrmt = createEnvi(root_folder = root_folder, folders = project_folders, 
+envrmt = createEnvi(root_folder = root_folder,
+                    fcts_folder = fcts_folder,
+                    folders = project_folders, 
                     path_prefix = "path_", libs = libs,
                     alt_env_id = "COMPUTERNAME", alt_env_value = "PCRZP",
                     alt_env_root_folder = "F:\\BEN\\edu")

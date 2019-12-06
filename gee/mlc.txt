@@ -53,11 +53,10 @@ var vis_params = {min: 0, max: 17, palette: PALETTE};
 var dataset = ee.ImageCollection('NASA/GLDAS/V021/NOAH/G025/T3H')
                   .filter(ee.Filter.date(DATESTART,DATEEND));
 // print('Collection: ', dataset);
-var precipitation = dataset.select('Rainf_f_tavg');
-var precipitation_mean = precipitation.reduce(ee.Reducer.mean());
-var precipitation_mean = precipitation_mean.multiply(3600);
+var rainf_f_tavg = dataset.select('Rainf_f_tavg');
+var rainf_f_tavg_mean = rainf_f_tavg.reduce(ee.Reducer.mean());
 
-print('Precipitation projection: ', precipitation_mean.projection());
+print('Precipitation projection: ', rainf_f_tavg_mean.projection());
 
 var precipitationVis = {
   min: 0.0,
@@ -68,20 +67,20 @@ var precipitationVis = {
 
 // Display each step of the computation.
 Map.setCenter(0, 0);
-// Map.addLayer(mcd12q1_lct1, vis_params, 'IGBP classification');
+Map.addLayer(mcd12q1_lct1, vis_params, 'IGBP classification');
 // Map.addLayer(image3, vis_params, 'Reprojected');
 //Map.addLayer(image4, vis_params, 'Mode');
 //Map.addLayer(image5, vis_params, 'Smooth');
 // Map.addLayer(image6, vis_params, 'Smooth6');
-// Map.addLayer(precipitation_mean, precipitationVis, 'Precipitation');
+// Map.addLayer(rainf_f_tavg_mean, precipitationVis, 'Precipitation');
 
 // Create a geometry representing an export region.
 // var geometry = ee.Geometry.Rectangle([-180, -90, 180, 90]);
 var geometry = ee.Geometry.Rectangle([-20048966, -20026376, 20048966, 20026376]);
 
-//var exportimage = ee.Image.cat([mcd12q1_lct1,precipitation_mean]);
-// var exportimage = ee.Image.cat([precipitation_mean, mcd12q1]);
-var exportimage = ee.Image.cat([mcd12q1]);
+var exportimage = ee.Image.cat([mcd12q1_lct1, rainf_f_tavg_mean]);
+// var exportimage = ee.Image.cat([rainf_f_tavg_mean, mcd12q1]);
+// var exportimage = ee.Image.cat([mcd12q1]);
 
 // Export the image, specifying scale and region.
 Export.image.toDrive({
