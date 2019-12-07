@@ -10,6 +10,7 @@
 #' @param target_projection projection of the compiled dataset
 #' @param output_extends extension in map coordinates of the compiled dataset
 #' @param output_dimensions dimensions in pixels of the compiled dataset
+#' 
 #' @author Thomas Nauss
 #' @contributer Pierre L. Ibisch, Jeanette S. Blumröder, Tobias Cremer, 
 #' Katharina Lüdicke, Peter R. Hobson, Douglas Sheil
@@ -51,8 +52,8 @@ compileGlobalBiomass = function(input_path, output_path,
   writeRaster(gsv, file.path(output_path, "gsv_wm_na.tif"), 
               format="GTiff")
   
-  map = reclassify(gsv, cbind(0, +Inf, 1), right=TRUE)
-  gsv_err = gsv_err * map
+  gsv_err = raster(file.path(output_path, "gsv_err_wm.tif"))
+  gsv_err = mask(gsv_err, gsv)
   writeRaster(gsv_err, file.path(output_path, "gsv_err_wm_na.tif"), 
               format="GTiff")
 }

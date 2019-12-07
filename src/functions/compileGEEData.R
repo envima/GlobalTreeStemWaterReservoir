@@ -14,18 +14,17 @@
 #'
 
 compileGEEData = function(input_path, output_path,
-                          rainfall_band,
-                          landcover_band){
+                          landcover_band,
+                          rainfall_band){
   
   # Land cover data ------------------------------------------------------------
-  gdal_translate(file.path(input_path, 
-                           "gee_mcd12q1_2010_gldas21_rainf_f_tavg_mean.tif"),
+  gdal_translate(input_path,
                  file.path(output_path, "gee_mlc_type1.tif"),
                  b = landcover_band)
   
   gee_mlc_type1_forest = raster(file.path(output_path, "gee_mlc_type1.tif"))
 
-  # Forest mask ----------------------------------------------------------------
+  # Trim to forest areas -------------------------------------------------------
   # MODIS land cover type 1 IDs: 
   # 1 Evergreen Needleleaf Forests
   # 2 Evergreen Broadleaf Forests 
@@ -33,6 +32,7 @@ compileGEEData = function(input_path, output_path,
   # 4	Deciduous Broadleaf Forests 
   # 5	Mixed Forests
   gee_mlc_type1_forest[gee_mlc_type1_forest > 5] = NA
+  gee_mlc_type1_forest = trim(gee_mlc_type1_forest)
 
   writeRaster(gee_mlc_type1_forest, 
               file.path(output_path, "gee_mlc_type1_forest.tif"), 
@@ -40,7 +40,7 @@ compileGEEData = function(input_path, output_path,
 
   
   # Rainfall data --------------------------------------------------------------
-  gdal_translate(file.path(input_path, "gee_1981_2010.tif"),
+  gdal_translate(input_path,
                  file.path(output_path, "gee_rainf_f_tavg.tif"),
                  b = rainfall_band)
   
@@ -55,7 +55,12 @@ compileGEEData = function(input_path, output_path,
                     na.rm = TRUE)
   gee_rainf_f_tavg = merge(gee_rainf_f_tavg, expansion)
   
+  gee_rainf_f_tavg = crop(gee_rainf_f_tavg, gee_mlc_type1_forest)
+  
   writeRaster(gee_rainf_f_tavg, 
               file.path(output_path, "gee_rainf_f_tavg_m3ha.tif"), 
               format="GTiff")
+  
+  return(list(output_extends = extent(gee_mlc_type1_forest), 
+              output_dimensions = dim(gee_mlc_type1_forest)))
 }

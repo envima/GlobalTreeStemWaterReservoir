@@ -16,7 +16,8 @@
 compileTreeWaterContentEcoReg = function(tw, tw_datasets, 
                                          ecoreg){
   
-  ecoreg = readOGR(ecoreg, layer = basename(dirname(ecoreg)))
+  ecoreg = readOGR(
+    ecoreg, layer = substr(basename(ecoreg), 1, nchar(basename(ecoreg))-4))
   
   tw_ecoreg = lapply(tw_datasets, function(d){
     
@@ -49,9 +50,9 @@ compileTreeWaterContentEcoReg = function(tw, tw_datasets,
     curfrct$MHTNAM_FRCT = paste0(curfrct$MHTNAM, " (", curfrct$FRAC*100, "%)")
     
     curdat_eco_final = merge(curdat_eco, 
-                             frct[, grep("MHTNAM", colnames(frct))], 
+                             curfrct[, grep("MHTNAM", colnames(curfrct))], 
                              by = "MHTNAM")
-    return(curdat_eco_final)
+    return(list(curdat_eco_final = curdat_eco_final, curfrct = curfrct))
   })
   names(tw_ecoreg) = tw_datasets
   

@@ -14,31 +14,23 @@
 compileBaselineDataset = function(filepath){
   
   # Stack datasets
-  bl_files = c("gee_mlc_type1_forest", 
-               "gsv_wm_na", "gsv_err_wm_na", 
+  bl_files = c("gsv_wm_na", 
+               "gsv_err_wm_na",
+               "gee_mlc_type1_forest", 
                "gee_rainf_f_tavg_m3ha")
+  
   bl = stack(file.path(filepath, paste0(bl_files, ".tif")))
+
+  # Mask dataset to valid values in biomass and tree layers and crop dataset to 
+  # bounding box of valid values afterwards.
+  bl = trim(
+    mask(bl, calc(bl[[c("gsv_wm_na","gee_mlc_type1_forest")]], fun = sum)))
   
-  # Crop dataset
-  ext = extent(bl)
-  ext@ymin = -8000000
-  bl = crop(bl, ext)
-  
-  # Mask dataset to valid biomass values (NA indicates <= 0) and 
-  # forest areas (NA indicates land cover type > 5)
-  
-  
-  land_see_mask = bl[["gsv_err_wm_na"]]
-  
-  msk = bl[[1]]
-  msk[msk == 17] = NA
-  
-  blm = mask(bl, msk)
-  
-  writeRaster(bl, file.path(output_path, "baseline_data.tif"), format="GTiff")
+  writeRaster(bl, file.path(filepath, "baseline_data.tif"), format="GTiff")
   
   saveRDS(bl, file.path(envrmt$path_rds_data, "baseline_data.rds"))
-  
-  
+
   return(bl)
 }
+
+
