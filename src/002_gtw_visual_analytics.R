@@ -15,24 +15,25 @@ source(file.path(root_folder, "EI-GlobalTreeWater/src/functions/000_setup.R"))
 # Plot global tree water by ecoregion ------------------------------------------
 tw_ecoreg = readRDS(file.path(envrmt$path_rds_data, "tw_ecoreg.rds"))
 
-# Do not consider regions with fractional woody cover < 0.01 caused by 
+# Do not consider regions with fractional woody cover <= 0.01 caused by 
 # uncertainties in map projections etc.
 non_forest_ecoregions = 
-  c("Tundra","Deserts and Xeric Shrublands", "Rock and Ice", "Inland Water")
-tw_ecoreg = tw_ecoreg[!(tw_ecoreg$MHTNAM %in% non_forest_ecoregions), ]
+  tw_ecoreg$twc_mean$curfrct$MHTNAM[tw_ecoreg$twc_mean$curfrct$FRAC<=0.01]
 
-tw_information = c("tree_water_mean", 
-                   "tree_water_mean_error", 
-                   "tree_water_mean_per_precipitation")
+tw_information = c("twc_mean", 
+                   "twc_error", 
+                   "twc_mean_precip")
 
 lables = list(expression("Mean tree water (m"^3*"/ha)"), 
               expression("Mean standard error (m"^3*"/ha)"),
               expression("Mean tree water/annual precipitation"))
 
-for(i in seq(lenght(tw_information))){
+for(i in seq(length(tw_information))){
   info = tw_information[i]
   
-  plt = ggplot(data = tw_ecoreg[[info]], aes(x = MHTNAM_FRCT, y = VALUES)) +
+  plt = ggplot(data = tw_ecoreg[[info]]$curdat_eco_final[
+    !(tw_ecoreg[[info]]$curdat_eco_final$MHTNAM %in% non_forest_ecoregions), ], 
+    aes(x = MHTNAM, y = VALUES)) +
     geom_boxplot() + 
     theme_light() + 
     theme(axis.text.x = element_text(angle = 45, hjust = 1),
@@ -41,7 +42,22 @@ for(i in seq(lenght(tw_information))){
   
   png(file.path(envrmt$path_graphics, paste0("plot_ecoregions_", info, ".png")),
       width = 3000, height = 3000, res = 300)
-  plt
+  plot(plt)
+  dev.off()
+  
+  plt = ggplot(data = tw_ecoreg[[info]]$curdat_eco_final[
+    !(tw_ecoreg[[info]]$curdat_eco_final$MHTNAM %in% non_forest_ecoregions), ], 
+    aes(x = MHTNAM_FRCT, y = VALUES)) +
+    geom_boxplot() + 
+    theme_light() + 
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),
+          axis.title.x = element_blank()) + 
+    labs(y = lables[[i]])
+  
+  png(file.path(envrmt$path_graphics, 
+                paste0("plot_ecoregions_", info, "_frac.png")),
+      width = 3000, height = 3000, res = 300)
+  plot(plt)
   dev.off()
 }
 
@@ -55,9 +71,9 @@ ecoreg_u = unionSpatialPolygons(ecoreg, ecoreg$WWF_MHTNAM)
 
 tw = readRDS(file.path(envrmt$path_rds_data, "tw.rds"))
 
-maps = c("tree_water_mean", 
-         "tree_water_mean_error", 
-         "tree_water_mean_per_precipitation")
+maps = c("twc_mean", 
+         "twc_error", 
+         "twc_mean_precip")
 
 lables = list(expression("Mean tree water (m"^3*"/ha)"), 
               expression("Mean standard error (m"^3*"/ha)"),
@@ -72,7 +88,7 @@ prjt = st_crs(54012)
 for(i in seq(length(maps))){
   tmap_mode("plot")
   tmap_style("white")
-  map = tm_shape(curdat = tw[[maps[i]]], projection = prjt) +
+  map = tm_shape(tw[[maps[i]]], projection = prjt) +
     tm_raster(style = "cont", palette = pallets[[i]], title = lables[[i]]) + 
     tm_shape(ecoreg_u) +
     tm_borders("grey40") +
@@ -93,6 +109,6 @@ for(i in seq(length(maps))){
   
   tiff(file.path(envrmt$path_graphics, paste0("map_", maps[[i]], ".tif")), 
        width = 3000, height = 3000, res = 300)
-  map
+  print(map)
   dev.off()
 }
